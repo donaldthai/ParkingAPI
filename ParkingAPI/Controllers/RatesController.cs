@@ -66,13 +66,16 @@ namespace ParkingAPI.Controllers
 
         /// <summary>
         /// Parses the iso date time.
+        /// 
+        /// More info on DateTimeStyles: 
+        /// https://docs.microsoft.com/en-us/dotnet/standard/base-types/standard-date-and-time-format-strings
         /// </summary>
         /// <returns>The DateTime.</returns>
         /// <param name="isoString">Iso string.</param>
         private DateTime ParseIsoDateTime(string isoString) 
         {
             return DateTime.ParseExact(isoString, IsoFormats, 
-                                       CultureInfo.InvariantCulture, DateTimeStyles.None);
+                                       CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
         }
 
 
