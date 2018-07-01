@@ -73,28 +73,134 @@ namespace ParkingAPI.Controllers
         /// <returns>The parking rate. Otherwise, returns "unavailable".</returns>
         /// <param name="start">Starting datetime of query.</param>
         /// <param name="end">Ending datetime of query.</param>
-        private string GetParkingRate(DateTime start, DateTime end) {
+        private string GetParkingRate(DateTime start, DateTime end) 
+        {
             /*
             {
                 "days": "mon,tues,thurs",
                 "times": "0900-2100",
                 "price": 1500
-            },
+            }
             */
+
+            if (start > end) {
+                throw new Exception("Start time is greater than end time.");
+            }
 
             //1. Determine all the days from query
             // check if the days from query match up to the days of
             // the current rate we're looking at
+            List<DayOfWeek> queryDays = GetQueryDays(start, end);
 
             //2. Determine if query time is within the time span,
             // greater than start time,
             // and less than end time
 
+            // get rate plan
+            Models.Rate curRate = GetRatePlan(queryDays, start, end);
+
             //3. Finally, if both 1 and 2 are ok, then return rate
             // otherwise, return "unavailable"
 
 
-            return null;
+            return curRate.Price.ToString();
+        }
+
+        /// <summary>
+        /// Gets the rate plan.
+        /// </summary>
+        /// <returns>The rate plan.</returns>
+        /// <param name="queryDays">Query days.</param>
+        /// <param name="d1">Start datetime.</param>
+        /// <param name="d2">End datetime.</param>
+        private Models.Rate GetRatePlan(List<DayOfWeek> queryDays, DateTime d1, DateTime d2) 
+        {
+            Models.Rate result = null;
+            //look through all the available rates
+            for (var i = 0; i < RATES.Rates.Count; i++) 
+            {
+                bool AreDaysInRate = true;
+                //check if the query days are not in the plan
+                for (var j = 0; j < queryDays.Count; j++)
+                {
+                    if (!RATES.Rates[i].Days.Contains(queryDays[j])) 
+                    {
+                        AreDaysInRate = false;
+                        break;
+                    }
+                }
+
+                //days okay
+                //check time spans
+                if (AreDaysInRate) {
+                    //is timespan encapsulated in rate timespan
+                    if (d1.TimeOfDay > RATES.Rates[i].Times.Start
+                        && d2.TimeOfDay < RATES.Rates[i].Times.End)
+                    {
+                        result = RATES.Rates[i];
+                        break;
+                    }
+                    //otherwise, continue
+                }
+            }
+
+            //ToDo: Okay for now. Might be better to just return the null.
+            if (result == null) 
+            {
+                throw new Exception("No appropriate rates found!");    
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Gets the query days.
+        /// </summary>
+        /// <returns>The query days.</returns>
+        /// <param name="d1">starting date.</param>
+        /// <param name="d2">ending date.</param>
+        private List<DayOfWeek> GetQueryDays(DateTime d1, DateTime d2) 
+        {
+            List<DayOfWeek> queryDays = new List<DayOfWeek>();
+
+            //we can first check if datetime is >= 7 days
+            //we can then assume that all days are included, Sun - Sat
+            int numOfDays = d2.DayOfYear - d1.DayOfYear;
+            if (numOfDays >= 7)
+            {
+                queryDays = Enum.GetValues(typeof(DayOfWeek)).Cast<DayOfWeek>().ToList();
+            }
+            else {
+                // otherwise, determine all the days from start to end datetime
+                // add current day
+                DayOfWeek curDay = d1.DayOfWeek;
+                queryDays.Add(curDay);
+                // add next days to end date
+                for (int i = 0; i < numOfDays; i++) 
+                {
+                    curDay = GetNextDay(curDay);
+                    queryDays.Add(curDay);
+                }
+            }
+
+            return queryDays;
+        }
+
+        /// <summary>
+        /// Gets the next day.
+        /// </summary>
+        /// <returns>The next day.</returns>
+        /// <param name="day">Day of week.</param>
+        private DayOfWeek GetNextDay(DayOfWeek day) 
+        {
+            int dayValue = (int)day + 1;
+
+            //if pass enum values, set to 0
+            if (dayValue >= 7) {
+                dayValue = 0;
+            }
+
+            return (DayOfWeek)dayValue;
         }
 
         /// <summary>
