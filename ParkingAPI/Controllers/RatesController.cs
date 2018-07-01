@@ -12,8 +12,8 @@ namespace ParkingAPI.Controllers
     [Route("api/[controller]")]
     public class RatesController : Controller
     {
-        private static readonly string jsonPath = "/Data/SampleRates1.json";
-        //private readonly string jsonPath = "/Data/SampleRates2.json";
+        //private static readonly string jsonPath = "/Data/SampleRates1.json";
+        private static readonly string jsonPath = "/Data/SampleRates2.json";
         private static readonly string[] IsoFormats = {
             "yyyy-MM-ddTHH:mm:ssZ"
         };
@@ -32,6 +32,7 @@ namespace ParkingAPI.Controllers
             }
         }
 
+        private static readonly string UNAVAILABLE = "unavailable";
 
         // GET api/values
         /// <summary>
@@ -46,7 +47,7 @@ namespace ParkingAPI.Controllers
         /// <param name="startDateTime">Start date time.</param>
         /// <param name="endDateTime">End date time.</param>
         [HttpGet]
-        public string Get(string startDateTime, string endDateTime)
+        public IActionResult Get(string startDateTime, string endDateTime)
         {
             try 
             {
@@ -56,12 +57,13 @@ namespace ParkingAPI.Controllers
                 //Console.WriteLine(d1);
                 //Console.WriteLine(d2);
 
-                return GetParkingRate(d1, d2); //return price
-            } catch (Exception ex) {
-                Console.WriteLine(ex);
+                return Ok(GetParkingRate(d1, d2)); //return price
             }
-
-            return "unavailable";
+            catch (Exception ex) 
+            {
+                Console.WriteLine(ex);
+                return BadRequest(ex.Message);
+            }
         }
 
         /// <summary>
@@ -84,7 +86,7 @@ namespace ParkingAPI.Controllers
             */
 
             if (start > end) {
-                throw new Exception("Start time is greater than end time.");
+                throw new ArgumentException("Start time is greater than end time.");
             }
 
             //1. Determine all the days from query
@@ -98,6 +100,12 @@ namespace ParkingAPI.Controllers
 
             // get rate plan
             Models.Rate curRate = GetRatePlan(queryDays, start, end);
+
+            if (curRate == null)
+            {
+                Console.WriteLine("No appropriate rates found!");
+                return UNAVAILABLE;
+            }
 
             //3. Finally, if both 1 and 2 are ok, then return rate
             // otherwise, return "unavailable"
@@ -144,12 +152,6 @@ namespace ParkingAPI.Controllers
                 }
             }
 
-            //ToDo: Okay for now. Might be better to just return the null.
-            if (result == null) 
-            {
-                throw new Exception("No appropriate rates found!");    
-            }
-
             return result;
         }
 
@@ -165,7 +167,7 @@ namespace ParkingAPI.Controllers
 
             //we can first check if datetime is >= 7 days
             //we can then assume that all days are included, Sun - Sat
-            int numOfDays = d2.DayOfYear - d1.DayOfYear;
+            int numOfDays = (d2 - d1).Days;
             if (numOfDays >= 7)
             {
                 queryDays = Enum.GetValues(typeof(DayOfWeek)).Cast<DayOfWeek>().ToList();
@@ -213,8 +215,24 @@ namespace ParkingAPI.Controllers
         /// <param name="isoString">Iso string.</param>
         private DateTime ParseIsoDateTime(string isoString) 
         {
-            return DateTime.ParseExact(isoString, IsoFormats, 
-                                       CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+            DateTime result;
+            try 
+            {
+                if (String.IsNullOrEmpty(isoString)) 
+                {
+                    throw new Exception("DateTime cannot be null");    
+                }
+
+                result = DateTime.ParseExact(isoString, IsoFormats,
+                                       CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);    
+            }
+            catch (Exception ex) 
+            {
+                Console.WriteLine(ex);
+                throw new ArgumentException("DateTime: '" + isoString + "', " + ex.Message);
+            }
+
+            return result;
         }
 
 
