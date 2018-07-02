@@ -1,4 +1,34 @@
-﻿# **Sample Problem**
+﻿# **Technical Notes**
+
+* Coded in C# .NET Core 2.0 Web API
+* Run and build solution in Visual Studio
+
+# **How to Run**
+
+1. Clone repository to your working station
+2. Open solution file in Visual Studio
+3. Navigate to "Build" menu located at the top
+4. Click "Build All" to build entire solution
+5. Navigate to "Run" menu located at the top
+6. Click "Start Debugging" or "Start Without Debugging"
+7. Wait till new browser window opens running the solution
+
+# **How to Use API**
+
+Once the ParkingAPI is built and running. API resource will run on localhost:33337/api/rates.
+
+The two query parameters needed to query a parking rate are:
+
+* startDateTime
+* endDateTime
+
+Set the params to date time ISO format and enter into browser. For example:
+```
+localhost:33337/api/rates?startDateTime=2015-07-01T07:00:00Z&endDateTime=2015-07-01T13:00:00Z
+```
+------------
+
+# **Sample Problem**
 
 ------------
 
