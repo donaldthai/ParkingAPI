@@ -26,6 +26,11 @@ Set the params to date time ISO format and enter into browser. For example:
 ```
 localhost:33337/api/rates?startDateTime=2015-07-01T07:00:00Z&endDateTime=2015-07-01T13:00:00Z
 ```
+
+# **View Swagger Documentation Page**
+
+Make sure that the solution is running then navigate to "localhost:33337/swagger" in browser.
+
 ------------
 
 # **Sample Problem**
